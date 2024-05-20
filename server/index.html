@@ -98,6 +98,7 @@
                 })
             }
             var selectedID
+            var selectedDOMAIN
         function search() {
             var searchQuery = document.getElementById("searcher").value
             var notice = document.getElementById("notice")
@@ -127,6 +128,7 @@
                     newOption.onclick = function() {
                         console.log(JSON.stringify(did))
                         selectedID = JSON.stringify(did)
+                        selectedDOMAIN = JSON.stringify(element.domain)
                         document.getElementById("notice").innerHTML = JSON.stringify(did)
                     }
                     document.getElementById("output").appendChild(newOption)
@@ -168,11 +170,12 @@
               })
               .then(data => {
                 console.log(data)
+                document.getElementById('one').style.display = 'none'
+                document.getElementById('two').style.display = 'none'
+                document.getElementById('three').style.display = 'none'
+                var stringifiedData = JSON.stringify(data.subdomain).replaceAll('"', '')+ '.' + selectedDOMAIN.replaceAll('"', '')
+                document.getElementById("newLink").innerHTML = stringifiedData
               })
-              document.getElementById('one').style.display = 'none'
-              document.getElementById('two').style.display = 'none'
-              document.getElementById('three').style.display = 'none'
-              
 
         }
     </script>
@@ -200,6 +203,8 @@
         <img src="" id="capthca2"><br>
         <input type="text" id="inp2" placeholder="captcha input">
         <button onclick="createLink2()">Submit</button>
+        
     </div>
+    <h1 id="newLink"></h1>
 </body>
 </html>
