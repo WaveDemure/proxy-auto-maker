@@ -135,7 +135,7 @@ def post_createSubdomain():
     password = request.headers.get('pass-word')
     subdomainName = randomString(16)
     domain_id = request.headers.get('domain-id')
-    destination = "38.175.196.242"
+    destination = ip
     captcha_code = request.headers.get('captcha-code')
     record_type = "A"
 
