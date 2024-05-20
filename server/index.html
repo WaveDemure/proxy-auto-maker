@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/libcurl.js@latest/libcurl_full.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxy Generation</title>
+    <style>.right{float: right;}body{background-color:rgb(31, 31, 31);}h1,h2{color:white;}#two,#three{display: none;}*{font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;}</style>
+    <script>
+        let dataUser
+        document.addEventListener("libcurl_load", ()=>{
+            libcurl.set_websocket(`wss://wisp.mercurywork.shop/`);
+            console.log("libcurl.js ready!");
+        });
+        let email
+          fetch('/api/v1/get/email')
+          .then(response => {
+            if (response.ok) {
+                return response.json()
+            } else {throw new Error('fuck you')}
+          })
+          .then(data => {
+            console.log(data)
+            email=data
+          })
+          fetch('/api/v1/get/captcha')
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Network response was not ok.');
+                }
+            })
+            .then(data => {
+                document.getElementById("capthca1").src = URL.createObjectURL(data)
+            })
+            function continue1() {
+                console.log('Running AC Steps...')
+                headers = new Headers()
+                headers.append('email-code', email.email)
+                headers.append('capthca-code', document.getElementById("inp1").value)
+                fetch('/api/v1/post/createAccount', {
+                    headers: headers
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text()
+                    } else {
+                        throw new Error(`Error (incorrect Capthca?)`)
+                    }
+                })
+                .then(data => {
+                    console.log(data)
+                    dataUser = JSON.parse(data)
+                    getInbox()
+                })
+            }
+            function getInbox() {
+                fetch('/api/v1/get/inbox', {
+                headers: {
+                    'in-box': email.email
+                }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text()
+                    } else {
+                        throw new Error('no')
+                    }
+                })
+                .then(data => {
+                    const urlRegex = /https?:\/\/[^\s]+/;
+                    const urlMatches = data.match(urlRegex);
+                    const activationURL = urlMatches ? urlMatches[0] : null;
+                    if (!activationURL) {
+                        getInbox()
+                        return
+                    }
+                    let trueURL = activationURL.replace('\\n\\n+----------------------------------+\\n', '')
+                    trueURL = trueURL.split('?')[1]
+                    fetch('/api/v1/post/activateAccount', {
+                        headers: {'activation-code': trueURL}
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.text()
+                        } else {
+                            throw new Error('sigma error')
+                        }
+                    })
+                    .then(data => {
+                        document.getElementById("one").style.display = "none";
+                        document.getElementById("two").style.display = "block";
+                    })
+                    
+
+
+                })
+            }
+            var selectedID
+        function search() {
+            var searchQuery = document.getElementById("searcher").value
+            var notice = document.getElementById("notice")
+
+            notice.innerHTML = "Fetching..."
+            fetch('/api/v1/get/registry', {
+                headers: {'query-code': searchQuery}
+            })
+            .then(Response =>{
+                if (Response.ok) {
+                    return Response.json()
+                } else {
+                    throw new Error("search error")
+                }
+            })
+            .then(data => {
+                notice.innerHTML = ""
+                document.getElementById("output").remove()
+                var newSelection = document.createElement("select")
+                newSelection.id = "output"
+                document.getElementById('two').appendChild(newSelection)
+                data.domains.forEach(element => {
+                    var did = element.id
+                    var domain = JSON.stringify(element.domain)
+                    var newOption = document.createElement('option')
+                    newOption.innerHTML = domain
+                    newOption.onclick = function() {
+                        console.log(JSON.stringify(did))
+                        selectedID = JSON.stringify(did)
+                        document.getElementById("notice").innerHTML = JSON.stringify(did)
+                    }
+                    document.getElementById("output").appendChild(newOption)
+                });
+            })
+        }
+        function createLink() {
+            document.getElementById("two").style.display = 'none';
+            document.getElementById("three").style.display = 'block';
+            fetch('/api/v1/get/captcha')
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Network response was not ok.');
+                }
+            })
+            .then(data => {
+                document.getElementById("capthca2").src = URL.createObjectURL(data)
+            })
+        }
+
+        function createLink2() {
+              var headers = new Headers()
+              headers.append('user-name', dataUser.username)
+              headers.append('pass-word', dataUser.password)
+              headers.append('domain-id', selectedID)
+              headers.append('captcha-code', document.getElementById('inp2').value)
+
+              fetch('/api/v1/post/createSubdomain', {
+                headers: headers
+              })
+              .then(response => {
+                if (response.ok) {
+                    return response.json()
+                } else {
+                    throw new Error("SDC error")
+                }
+              })
+              .then(data => {
+                console.log(data)
+              })
+              document.getElementById('one').style.display = 'none'
+              document.getElementById('two').style.display = 'none'
+              document.getElementById('three').style.display = 'none'
+              
+
+        }
+    </script>
+</head>
+<body>
+    <h1>FreeDNS capthcas (2)</h1>
+    <div id="one">
+        <img id="capthca1"><br>
+        <input id="inp1">
+        <button onclick="continue1()">Submit</button><br><br>
+    </div>
+    <div id="two">
+        <h2>seach the domain registry</h2>
+        <input placeholder="query" id="searcher">
+        <button onclick="search()">
+            Submit
+        </button>
+        <span id="notice"></span><br>
+        <select id="output">
+            
+        </select>
+        <button onclick="createLink()">Create Subdomain</button>
+    </div>
+    <div id="three">
+        <img src="" id="capthca2"><br>
+        <input type="text" id="inp2" placeholder="captcha input">
+        <button onclick="createLink2()">Submit</button>
+    </div>
+</body>
+</html>
