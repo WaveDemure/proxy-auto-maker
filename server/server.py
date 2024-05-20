@@ -83,10 +83,6 @@ def generateRandomEmail():
 def index():
     return send_file('client/index.html')
 
-@app.route('/debugger')
-def debugger(): 
-    return send_file('search.html')
-
 @app.route('/api/v1/get/captcha')
 def captcha_Get():
     captcha = client.get_captcha()
